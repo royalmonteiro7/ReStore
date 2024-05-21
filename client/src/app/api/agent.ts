@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 import { router } from "../../router/Routes";
+import { PaginatedResponse } from "../models/MetaData";
 
 const sleep = () => new Promise(resolve => setTimeout(resolve, 500))
 
@@ -10,7 +11,13 @@ axios.defaults.withCredentials = true;
 const responseBody = (response: AxiosResponse) => response.data
 
 axios.interceptors.response.use(async response => {
-    await sleep()
+    await sleep();
+
+    const pagination = response.headers['pagination'];
+    if (pagination) {
+        response.data = new PaginatedResponse(response.data, JSON.parse(pagination))
+    }
+    
     return response;
 }, (error: AxiosError) => {
     const { data, status } = error.response as AxiosResponse;
@@ -31,7 +38,7 @@ axios.interceptors.response.use(async response => {
             toast.error(data.title)
             break
         case 500:
-            { router.navigate('/server-error', { state: { error: data } }) }
+            router.navigate('/server-error', { state: { error: data } })
             break;
         default:
             break
@@ -40,15 +47,16 @@ axios.interceptors.response.use(async response => {
 })
 
 const requests = {
-    get: (url: string) => axios.get(url).then(responseBody),
+    get: (url: string, params?: URLSearchParams) => axios.get(url, { params }).then(responseBody),
     post: (url: string, body: {}) => axios.post(url, body).then(responseBody),
     put: (url: string, body: {}) => axios.put(url, body).then(responseBody),
     delete: (url: string) => axios.delete(url).then(responseBody)
 }
 
 const Catalog = {
-    list: () => requests.get('products'),
-    details: (id: number) => requests.get(`products/${id}`)
+    list: (params: URLSearchParams) => requests.get('products', params),
+    details: (id: number) => requests.get(`products/${id}`),
+    fetchFilters: () => requests.get('products/filters')
 }
 
 const TestErrors = {
