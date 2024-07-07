@@ -20,8 +20,10 @@ namespace API.Extensions
                     PictureUrl = item.Product.PictureUrl,
                     Type = item.Product.Type,
                     Brand = item.Product.Brand,
-                    Quantity = item.Quantity
-                }).ToList()
+                    Quantity = item.Quantity,
+                }).ToList(),
+                PaymentIntentId = basket.PaymentIntentId,
+                ClientSecret = basket.ClientSecret
             };
         }
 
